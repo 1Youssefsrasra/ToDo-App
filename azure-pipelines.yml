@@ -23,6 +23,8 @@ stages:
         npm install
          #npm run build
       displayName: 'npm install and build'
+
+
 - stage: CodeQuality
   displayName: 'Code Quality Stage'
   jobs:
@@ -37,7 +39,7 @@ stages:
         configMode: 'manual'
         cliProjectKey: 'nodejs-app'
         cliProjectName: 'nodejs-app'
-        cliSources: '.'
+        cliSources: './backend'
       displayName: 'Prepare SonarQube Analysis'
     - script: |
         cd backend
