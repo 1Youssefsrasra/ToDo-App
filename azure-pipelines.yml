@@ -73,7 +73,7 @@ stages:
         containerRegistry: 'DockerHubConnection'  # DockerHub service connection
         repository: 'first_repo'                 # DockerHub repository name
         command: 'buildAndPush'
-        Dockerfile: '**/backend/Dockerfile'
+        Dockerfile: '**/Dockerfile'
         tags: |
           $(Build.BuildId)
       displayName: 'Build and Push Docker Image to DockerHub'
