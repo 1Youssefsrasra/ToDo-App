@@ -2,7 +2,7 @@ trigger:
 - master
 
 pool:
-  vmImage: ubuntu-latest
+ name: Test Pool
 
 stages:
 - stage: Build
