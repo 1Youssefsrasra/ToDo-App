@@ -4,79 +4,61 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-stages:
-- stage: Build
-  displayName: 'Build Stage'
-  jobs:
-  - job: Build
-    displayName: 'Build Job'
-    steps:
-    # Step 1: Install Node.js
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '20.x'
-      displayName: 'Install Node.js'
+steps:
+# Step 1: Install Node.js
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: 'Install Node.js'
 
-    # Step 2: Install dependencies and build the project
-    - script: |
-        npm install
-        npm run build
-      displayName: 'npm install and build'
+# Step 2: Install dependencies and build the project (inside backend folder)
+- script: |
+    cd backend
+    npm install
+    npm run build
+  displayName: 'npm install and build'
 
-- stage: CodeQuality
-  displayName: 'Code Quality Stage'
-  jobs:
-  - job: SonarQubeAnalysis
-    displayName: 'SonarQube Analysis Job'
-    steps:
-    # Step 3: SonarQube Analysis (Code Quality)
-    - task: SonarQubePrepare@5
-      inputs:
-        SonarQube: 'SonarQubeConnection'
-        scannerMode: 'CLI'
-        configMode: 'manual'
-        cliProjectKey: 'nodejs-app'
-        cliProjectName: 'nodejs-app'
-        cliSources: '.'
-      displayName: 'Prepare SonarQube Analysis'
+# Step 3: SonarQube Analysis (Code Quality)
+- task: SonarQubePrepare@5
+  inputs:
+    SonarQube: 'SonarQubeConnection'
+    scannerMode: 'CLI'
+    configMode: 'manual'
+    cliProjectKey: 'nodejs-app'
+    cliProjectName: 'nodejs-app'
+    cliSources: 'backend'  # Change to point to the backend directory
+  displayName: 'Prepare SonarQube Analysis'
 
-    - script: |
-        npm run lint
-      displayName: 'Lint the code'
+# Lint code inside the backend directory
+- script: |
+    cd backend
+    npm run lint
+  displayName: 'Lint the code'
 
-    - task: SonarQubeAnalyze@5
-      displayName: 'Run SonarQube Analysis'
+# Run SonarQube analysis
+- task: SonarQubeAnalyze@5
+  displayName: 'Run SonarQube Analysis'
 
-    - task: SonarQubePublish@5
-      inputs:
-        pollingTimeoutSec: '300'
-      displayName: 'Publish SonarQube Results'
+# Publish SonarQube results
+- task: SonarQubePublish@5
+  inputs:
+    pollingTimeoutSec: '300'
+  displayName: 'Publish SonarQube Results'
 
-- stage: SecurityScan
-  displayName: 'Security Scan Stage'
-  jobs:
-  - job: TrivyScan
-    displayName: 'Trivy Security Scan Job'
-    steps:
-    # Step 4: Trivy Security Scan (Docker Image Security Scanning)
-    - script: |
-        docker build -t my-app-image .
-        trivy image --severity HIGH,CRITICAL my-app-image
-      displayName: 'Trivy Security Scan for Docker Image'
+# Step 4: Trivy Security Scan (Docker Image Security Scanning)
+- script: |
+    cd backend
+    docker build -t my-app-image .
+    trivy image --severity HIGH,CRITICAL my-app-image
+  displayName: 'Trivy Security Scan for Docker Image'
 
-- stage: DockerDeployment
-  displayName: 'Docker Deployment Stage'
-  jobs:
-  - job: DockerBuildAndPush
-    displayName: 'Docker Build and Push Job'
-    steps:
-    # Step 5: Docker Build and Push to Docker Hub
-    - task: Docker@2
-      inputs:
-        containerRegistry: 'DockerHubConnection'  # DockerHub service connection
-        repository: 'first_repo'                 # DockerHub repository name
-        command: 'buildAndPush'
-        Dockerfile: '**/Dockerfile'
-        tags: |
-          $(Build.BuildId)
-      displayName: 'Build and Push Docker Image to DockerHub'
+# Step 5: Docker Build and Push to Docker Hub (from backend)
+- task: Docker@2
+  inputs:
+    containerRegistry: 'DockerHubConnection'  # DockerHub service connection
+    repository: 'first_repo'                  # DockerHub repository name
+    command: 'buildAndPush'
+    Dockerfile: 'backend/Dockerfile'          # Specify the Dockerfile path inside backend
+    tags: |
+      $(Build.BuildId)
+  displayName: 'Build and Push Docker Image to DockerHub'
