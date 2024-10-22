@@ -34,11 +34,14 @@ stages:
     steps:
      # Step 1: Install Dependencies
     - script: |
-        curl -fsSL https://deb.nodesource.com/setup_17.x | sudo -E bash -
-        sudo apt-get install -y nodejs
-        node -v
-        cd backend
-        npm install
+          sudo apt-get remove -y libnode-dev
+          sudo apt-get update
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          node -v
+          npm -v
+          cd backend
+          npm install
       displayName: 'Install Dependencies'
     # Step 1: SonarQube Analysis (Code Quality)
     - task: SonarQubePrepare@5
