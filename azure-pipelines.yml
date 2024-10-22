@@ -79,8 +79,22 @@ stages:
     displayName: 'Trivy Security Scan Job'
     steps:
     - script: |
+        # Install required packages
         sudo apt-get update
-        sudo apt-get install -y trivy
+        sudo apt-get install -y curl unzip
+
+        # Download the latest Trivy binary
+        TRIVY_VERSION=0.52.0  # Update to the latest version as necessary
+        curl -L -o trivy.zip https://github.com/aquasecurity/trivy/releases/download/v$TRIVY_VERSION/trivy_$TRIVY_VERSION_Linux-64bit.zip
+
+        # Unzip the binary
+        unzip trivy.zip
+
+        # Move the binary to a directory in the PATH
+        sudo mv trivy /usr/local/bin/
+
+        # Clean up
+        rm trivy.zip
       displayName: 'Install Trivy'
     # Step 4: Trivy Security Scan (Docker Image Security Scanning)
     - script: |
