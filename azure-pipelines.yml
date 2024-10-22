@@ -1,0 +1,91 @@
+trigger:
+- master
+
+pool:
+ name: Test Pool
+
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: Build
+    displayName: 'Build Job'
+    steps:
+    # Step 1: Install Node.js
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+      displayName: 'Install Node.js'
+
+    # Step 2: Install dependencies and build the project
+    - script: |
+        cd backend
+        npm install
+         #npm run build
+      displayName: 'npm install and build'
+
+- stage: CodeQuality
+  displayName: 'Code Quality Stage'
+  variables:
+    system.debug: true  # Enable debug mode for the entire stage
+  jobs:
+  - job: SonarQubeAnalysis
+    displayName: 'SonarQube Analysis Job'
+    steps:
+    # Step 1: SonarQube Analysis (Code Quality)
+    - task: SonarQubePrepare@5
+      inputs:
+        SonarQube: 'SonarQubeConnection'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'nodejs-app'
+        cliProjectName: 'nodejs-app'
+        cliSources: './backend'
+      displayName: 'Prepare SonarQube Analysis'
+
+    # Step 2: Lint the code
+    - script: |
+        cd backend
+        npm run lint
+      displayName: 'Lint the code'
+
+    # Step 3: Run SonarQube Analysis
+    - task: SonarQubeAnalyze@5
+      displayName: 'Run SonarQube Analysis'
+
+    # Step 4: Publish SonarQube Results
+    - task: SonarQubePublish@5
+      inputs:
+        pollingTimeoutSec: '600'  # Increased timeout
+      displayName: 'Publish SonarQube Results'
+
+
+
+- stage: SecurityScan
+  displayName: 'Security Scan Stage'
+  jobs:
+  - job: TrivyScan
+    displayName: 'Trivy Security Scan Job'
+    steps:
+    # Step 4: Trivy Security Scan (Docker Image Security Scanning)
+    - script: |
+        cd backend
+        docker build -t my-app-image .
+        trivy image --severity HIGH,CRITICAL my-app-image
+      displayName: 'Trivy Security Scan for Docker Image'
+- stage: DockerDeployment
+  displayName: 'Docker Deployment Stage'
+  jobs:
+  - job: DockerBuildAndPush
+    displayName: 'Docker Build and Push Job'
+    steps:
+    # Step 5: Docker Build and Push to Docker Hub
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'DockerHubConnection'  # DockerHub service connection
+        repository: 'first_repo'                 # DockerHub repository name
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+      displayName: 'Build and Push Docker Image to DockerHub'
