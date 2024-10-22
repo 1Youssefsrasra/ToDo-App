@@ -32,6 +32,11 @@ stages:
   - job: SonarQubeAnalysis
     displayName: 'SonarQube Analysis Job'
     steps:
+     # Step 1: Install Dependencies
+    - script: |
+        cd backend
+        npm install
+      displayName: 'Install Dependencies'
     # Step 1: SonarQube Analysis (Code Quality)
     - task: SonarQubePrepare@5
       inputs:
