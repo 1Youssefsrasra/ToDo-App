@@ -98,7 +98,7 @@ stages:
       displayName: 'Install Trivy'
     # Step 4: Trivy Security Scan (Docker Image Security Scanning)
     - script: |
-        export DOCKER_BUILDKIT=1
+        export DOCKER_BUILDKIT=0
         cd backend
         docker build -t my-app-image .
         trivy image --severity HIGH,CRITICAL my-app-image
