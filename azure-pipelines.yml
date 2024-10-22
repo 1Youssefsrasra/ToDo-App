@@ -78,8 +78,13 @@ stages:
   - job: TrivyScan
     displayName: 'Trivy Security Scan Job'
     steps:
+    - script: |
+        sudo apt-get update
+        sudo apt-get install -y trivy
+      displayName: 'Install Trivy'
     # Step 4: Trivy Security Scan (Docker Image Security Scanning)
     - script: |
+        export DOCKER_BUILDKIT=1
         cd backend
         docker build -t my-app-image .
         trivy image --severity HIGH,CRITICAL my-app-image
