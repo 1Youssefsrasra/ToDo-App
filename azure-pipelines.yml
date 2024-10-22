@@ -24,14 +24,15 @@ stages:
          #npm run build
       displayName: 'npm install and build'
 
-
 - stage: CodeQuality
   displayName: 'Code Quality Stage'
+  variables:
+    system.debug: true  # Enable debug mode for the entire stage
   jobs:
   - job: SonarQubeAnalysis
     displayName: 'SonarQube Analysis Job'
     steps:
-    # Step 3: SonarQube Analysis (Code Quality)
+    # Step 1: SonarQube Analysis (Code Quality)
     - task: SonarQubePrepare@5
       inputs:
         SonarQube: 'SonarQubeConnection'
@@ -41,16 +42,25 @@ stages:
         cliProjectName: 'nodejs-app'
         cliSources: './backend'
       displayName: 'Prepare SonarQube Analysis'
+
+    # Step 2: Lint the code
     - script: |
         cd backend
         npm run lint
       displayName: 'Lint the code'
+
+    # Step 3: Run SonarQube Analysis
     - task: SonarQubeAnalyze@5
       displayName: 'Run SonarQube Analysis'
+
+    # Step 4: Publish SonarQube Results
     - task: SonarQubePublish@5
       inputs:
-        pollingTimeoutSec: '300'
+        pollingTimeoutSec: '600'  # Increased timeout
       displayName: 'Publish SonarQube Results'
+
+
+
 - stage: SecurityScan
   displayName: 'Security Scan Stage'
   jobs:
